@@ -1,8 +1,7 @@
-{
-  "timestamp": "2026-05-10T20:01:49+01:00",
-  "coherence": 0.982,
-  "merkabah": 1.4112,
-  "ywt_vaccine_active": true,
-  "ms_reversal_active": true,
-  "status": "ACTIVE"
-}
+    {
+      "timestamp": "2026-05-10T20:09:20+01:00",
+      "coherence": ,
+      "merkabah": ,
+      "voxel_energy": 0.98,
+      "status": "ACTIVE"
+    }
