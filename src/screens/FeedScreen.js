@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
-import { View, FlatList, Text, Button, ActivityIndicator, StyleSheet, RefreshControl } from 'react-native';
+import { View, FlatList, Text, Button, ActivityIndicator, StyleSheet, RefreshControl, Dimensions } from 'react-native';
+import { Video } from 'expo-av';
 import { useFocusEffect } from '@react-navigation/native';
 import apiClient from '../api/apiClient';
 import { AuthContext } from '../context/AuthContext';
 import PostItem from '../components/PostItem';
+
+const { width, height } = Dimensions.get('window');
 
 export default function FeedScreen({ navigation }) {
   const [posts, setPosts] = useState([]);
@@ -28,6 +31,8 @@ export default function FeedScreen({ navigation }) {
 
   const onRefresh = () => { setRefreshing(true); fetchPosts(); };
 
+  const renderItem = ({ item }) => <PostItem post={item} />;
+
   if (loading) return <ActivityIndicator size="large" style={{ marginTop: 50 }} />;
 
   return (
@@ -35,14 +40,21 @@ export default function FeedScreen({ navigation }) {
       <FlatList
         data={posts}
         keyExtractor={(item) => item.ID}
-        renderItem={({ item }) => <PostItem post={item} />}
+        renderItem={renderItem}
+        pagingEnabled={true}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={height}
+        decelerationRate="fast"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        ListEmptyComponent={<Text style={styles.empty}>No posts yet. Create one!</Text>}
       />
-      <Button title="New Post" onPress={() => navigation.navigate('CreatePost')} />
-      <Button title="Logout" onPress={signOut} color="red" />
+      <View style={styles.buttons}>
+        <Button title="New Post" onPress={() => navigation.navigate('CreatePost')} />
+        <Button title="Logout" onPress={signOut} color="red" />
+      </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({ empty: { textAlign: 'center', marginTop: 50, fontSize: 16 } });
+const styles = StyleSheet.create({
+  buttons: { position: 'absolute', bottom: 20, right: 20, gap: 10 },
+});

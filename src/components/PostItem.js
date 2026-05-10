@@ -1,35 +1,67 @@
-import React, { useContext, useState } from 'react';
-import { View, Text, Image, Button, Alert, StyleSheet } from 'react-native';
+import React, { useContext, useState, useRef } from 'react';
+import { View, Text, Image, Button, Alert, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { Video } from 'expo-av';
 import apiClient from '../api/apiClient';
 import { AuthContext } from '../context/AuthContext';
 
+const { width, height } = Dimensions.get('window');
+
 export default function PostItem({ post }) {
   const { userToken } = useContext(AuthContext);
-  const [tipping, setTipping] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(post.LikeCount || 0);
+  const videoRef = useRef(null);
   const date = new Date(post.CreatedAt).toLocaleString();
-  const mediaUrl = post.MediaURL;
-  const isImage = mediaUrl && (mediaUrl.match(/\.(jpeg|jpg|png|gif)$/i) || mediaUrl.includes('image'));
+  const isVideo = post.MediaType === 'video';
 
   const sendTip = async () => {
-    setTipping(true);
     try {
-      await apiClient.post('/tips/solana', { to: post.UserID, amount: 0.001 });
-      Alert.alert('Tip sent', 'Thank you for supporting!');
+      await apiClient.post('/tips', { to: post.UserID, amount: 0.001 });
+      Alert.alert('Tip sent', 'Thank you!');
     } catch (err) {
-      Alert.alert('Tip failed', err.response?.data?.error || 'Try again later');
-    } finally {
-      setTipping(false);
+      Alert.alert('Tip failed');
+    }
+  };
+
+  const toggleLike = async () => {
+    try {
+      const res = await apiClient.post(`/like/${post.ID}`);
+      setLiked(res.data.liked);
+      setLikeCount(prev => res.data.liked ? prev + 1 : prev - 1);
+    } catch (err) {
+      console.error(err);
     }
   };
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { height }]}>
       <Text style={styles.username}>{post.Username || 'Anonymous'}</Text>
-      <Text style={styles.content}>{post.Content}</Text>
-      {mediaUrl && isImage && <Image source={{ uri: mediaUrl }} style={styles.media} resizeMode="cover" />}
-      {mediaUrl && !isImage && <Text style={styles.videoNote}>🎥 Video attached</Text>}
+      {post.Content ? <Text style={styles.content}>{post.Content}</Text> : null}
+      
+      {post.MediaURL && isVideo ? (
+        <Video
+          ref={videoRef}
+          source={{ uri: 'http://localhost:8080' + post.MediaURL }}
+          style={styles.media}
+          resizeMode="cover"
+          shouldPlay={false}
+          isLooping
+          useNativeControls
+        />
+      ) : post.MediaURL ? (
+        <Image source={{ uri: 'http://localhost:8080' + post.MediaURL }} style={styles.media} resizeMode="cover" />
+      ) : null}
+
       <View style={styles.actions}>
-        <Button title={tipping ? "Tipping..." : "Tip 0.001 SOL"} onPress={sendTip} disabled={tipping} />
+        <TouchableOpacity onPress={toggleLike}>
+          <Text>{liked ? '❤️' : '🤍'} {likeCount}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={sendTip}>
+          <Text>💎 Tip</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => {}}>
+          <Text>💬 Comment</Text>
+        </TouchableOpacity>
       </View>
       <Text style={styles.date}>{date}</Text>
     </View>
@@ -37,11 +69,10 @@ export default function PostItem({ post }) {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#f9f9f9', borderRadius: 8, padding: 16, margin: 8, elevation: 2 },
-  username: { fontWeight: 'bold', marginBottom: 4 },
-  content: { fontSize: 16, marginBottom: 8 },
-  media: { width: '100%', height: 200, borderRadius: 8, marginTop: 8 },
-  videoNote: { marginTop: 8, color: '#555' },
-  actions: { marginTop: 10, marginBottom: 5 },
-  date: { fontSize: 12, color: '#888', textAlign: 'right' },
+  card: { width, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  username: { color: '#fff', fontWeight: 'bold', marginBottom: 4, alignSelf: 'flex-start' },
+  content: { color: '#fff', marginBottom: 8, alignSelf: 'flex-start' },
+  media: { width: width - 40, height: height * 0.6, borderRadius: 12, marginVertical: 10 },
+  actions: { flexDirection: 'row', justifyContent: 'space-around', width: '100%', marginTop: 10 },
+  date: { color: '#aaa', marginTop: 8, alignSelf: 'flex-start' },
 });
