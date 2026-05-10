@@ -1,7 +1,7 @@
-    {
-      "timestamp": "2026-05-10T20:09:20+01:00",
-      "coherence": ,
-      "merkabah": ,
-      "voxel_energy": 0.98,
-      "status": "ACTIVE"
-    }
+{
+  "timestamp": "2026-05-10T20:11:02+01:00",
+  "coherence": .9801,
+  "merkabah": 1.4113,
+  "voxel_energy": .9801,
+  "status": "ACTIVE"
+}
